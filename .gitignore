@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI agent files (internal use)
+AGENTS.md
+CLAUDE.md
+.windsurf/
+.cursor/
+
+# Build logs
+build.log
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

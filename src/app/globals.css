@@ -1,26 +1,64 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ======================================
+   DIORA — Global Design System Reset
+   ====================================== */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-brand-offWhite text-brand-ink font-sans;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    @apply bg-brand-rose/30 text-brand-ink;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-brand-offWhite;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-rose/40 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-rose/60;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .section-padding {
+    @apply px-6 md:px-12 lg:px-20 xl:px-28;
+  }
+
+  .heading-display {
+    @apply font-serif tracking-tight leading-tight;
+  }
+
+  .label-luxury {
+    @apply uppercase tracking-[0.25em] text-xs font-sans font-medium text-brand-deepRose;
+  }
+
+  .glass-surface {
+    @apply bg-brand-offWhite/80 backdrop-blur-md border-b border-brand-rose/10;
+  }
 }
