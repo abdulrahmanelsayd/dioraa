@@ -208,7 +208,7 @@ export function CouponCard({
         {isSuggested && savingsAmount > 0 && (
           <div className="mb-4 p-3 bg-brand-rose/10 rounded-luxury border border-brand-rose/20">
             <p className="text-sm font-medium text-brand-rose">
-              You'll save <span className="font-bold">${savingsAmount.toFixed(2)}</span> with this coupon
+              You&apos;ll save <span className="font-bold">${savingsAmount.toFixed(2)}</span> with this coupon
             </p>
           </div>
         )}

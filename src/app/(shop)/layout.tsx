@@ -10,10 +10,14 @@ function generateBreadcrumbs(pathname: string) {
 
   segments.forEach((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
-    const label = segment
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-    breadcrumbs.push({ label, href });
+    // Convert "product" segment to "shop" with correct link
+    const isProductSegment = segment === "product" && index === 0;
+    const label = isProductSegment
+      ? "Shop"
+      : segment
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+    breadcrumbs.push({ label, href: isProductSegment ? "/shop" : href });
   });
 
   return breadcrumbs;

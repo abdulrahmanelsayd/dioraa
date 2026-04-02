@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Home, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
 
@@ -16,6 +16,7 @@ interface BreadcrumbsProps {
   className?: string;
   showHome?: boolean;
   variant?: "default" | "glass" | "minimal";
+  onClick?: () => void;
 }
 
 // Glass morphism pill for Apple Vision Pro style
@@ -46,12 +47,12 @@ function BreadcrumbItem({
   item, 
   index, 
   isLast,
-  variant 
+  onClick
 }: { 
   item: Breadcrumb; 
   index: number; 
   isLast: boolean;
-  variant: string;
+  onClick?: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -86,8 +87,11 @@ function BreadcrumbItem({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Link
+          <Link 
             href={item.href}
+            onClick={() => {
+              onClick?.();
+            }}
             className={cn(
               "relative px-3 py-1.5 rounded-full text-xs font-sans tracking-wide transition-all duration-300",
               "text-brand-mist hover:text-brand-ink",
@@ -163,7 +167,6 @@ export function Breadcrumbs({
             item={item}
             index={index}
             isLast={index === allItems.length - 1}
-            variant={variant}
           />
         ))}
       </nav>
@@ -189,7 +192,6 @@ export function Breadcrumbs({
               item={item}
               index={index}
               isLast={index === allItems.length - 1}
-              variant={variant}
             />
           ))}
         </div>

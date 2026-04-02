@@ -1,0 +1,36 @@
+{
+  "name": "DIORA - Luxury Beauty",
+  "short_name": "DIORA",
+  "description": "Premium personal care crafted with the finest ingredients. Purity in every drop.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#D8A7B1",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["shopping", "lifestyle", "beauty"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Best Sellers",
+      "short_name": "Best Sellers",
+      "description": "View our curated best sellers collection",
+      "url": "/#bestsellers"
+    },
+    {
+      "name": "Cart",
+      "short_name": "Cart",
+      "description": "View your shopping cart",
+      "url": "/cart"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

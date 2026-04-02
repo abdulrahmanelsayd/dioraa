@@ -68,6 +68,15 @@ export type ProductCategory =
 
 export type SkinType = "Oily" | "Dry" | "Combination" | "Sensitive" | "Normal" | "All Skin Types";
 
+export const SKIN_TYPES: readonly SkinType[] = [
+  "Oily",
+  "Dry",
+  "Combination",
+  "Sensitive",
+  "Normal",
+  "All Skin Types",
+] as const;
+
 export type SkinConcern =
   | "Acne"
   | "Anti-Aging"
@@ -83,6 +92,31 @@ export type SkinConcern =
   | "Hydration"
   | "Firmness"
   | "Brightening";
+
+export const SKIN_CONCERNS: readonly SkinConcern[] = [
+  "Acne",
+  "Anti-Aging",
+  "Dark Spots",
+  "Dryness",
+  "Dullness",
+  "Fine Lines",
+  "Oiliness",
+  "Pores",
+  "Redness",
+  "Sensitivity",
+  "Hydration",
+  "Brightening",
+] as const;
+
+export const PRODUCT_CATEGORIES = {
+  ALL: "All" as const,
+  SKIN_CARE: "Skin Care" as const,
+  HAIR_CARE: "Hair Care" as const,
+  MAKEUP: "Makeup" as const,
+  BODY_CARE: "Body Care" as const,
+  FRAGRANCE: "Fragrance" as const,
+  TOOLS_ACCESSORIES: "Tools & Accessories" as const,
+} as const;
 
 export interface CartItem extends Product {
   quantity: number;

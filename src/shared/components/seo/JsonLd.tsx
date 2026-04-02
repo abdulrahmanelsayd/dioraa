@@ -3,7 +3,7 @@
  * Follows Schema.org specifications for rich snippets
  */
 
-import type { Product, Review } from "@/shared/types/product";
+import type { Product } from "@/shared/types/product";
 
 interface JsonLdProps {
   data: Record<string, unknown>;
@@ -83,9 +83,18 @@ export function WebSiteJsonLd({
 interface ProductJsonLdProps {
   product: Product;
   url?: string;
+  // Price validity date - defaults to 1 year from build time for SSR compatibility
+  priceValidUntil?: string;
 }
 
-export function ProductJsonLd({ product, url = "https://diora.com" }: ProductJsonLdProps) {
+export function ProductJsonLd({ 
+  product, 
+  url = "https://diora.com",
+  priceValidUntil
+}: ProductJsonLdProps) {
+  // Use provided date or fallback to a far-future static date for SSR compatibility
+  const validUntil = priceValidUntil || "2026-12-31T23:59:59Z";
+  
   const data = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -106,9 +115,7 @@ export function ProductJsonLd({ product, url = "https://diora.com" }: ProductJso
       availability: product.inStock !== false
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      priceValidUntil: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString(),
+      priceValidUntil: validUntil,
       url: `${url}/product/${product.slug}`,
       seller: {
         "@type": "Organization",

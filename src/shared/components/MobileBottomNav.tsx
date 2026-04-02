@@ -9,8 +9,7 @@ import {
   Search, 
   ShoppingBag, 
   Heart, 
-  Sparkles,
-  Menu
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useCartStore } from "@/features/cart/store/useCartStore";
@@ -47,7 +46,7 @@ function DockItem({
     >
       <Link 
         href={item.href}
-        onClick={(e) => {
+        onClick={() => {
           onClick();
         }}
         onTouchStart={() => setIsPressed(true)}
@@ -193,7 +192,6 @@ function CenterButton({ onClick, isMenuOpen }: { onClick: () => void; isMenuOpen
 function QuickMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const quickActions = [
     { label: "New Arrivals", href: "/category/skin-care?filter=new", icon: "✨" },
-    { label: "Bestsellers", href: "/#bestsellers", icon: "🔥" },
     { label: "Sale", href: "/category/skin-care?filter=sale", icon: "%" },
     { label: "Search", href: "#", icon: "🔍", onClick: () => {} },
   ];
@@ -289,6 +287,7 @@ export function MobileBottomNav() {
 
   // Set active item based on pathname
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (pathname === "/") setActiveItem("home");
     else if (pathname.includes("/category")) setActiveItem("shop");
     else if (pathname.includes("/product")) setActiveItem("shop");

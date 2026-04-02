@@ -28,7 +28,7 @@ export type {
 } from "./types";
 
 // Client utilities
-export { createApiError, withErrorHandling } from "./client";
+export { createApiError } from "./client";
 
 // Product API
 export {

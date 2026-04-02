@@ -1,33 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useWishlistStore } from "@/features/wishlist/store/useWishlistStore";
-import { ShoppingBag, Menu, X, Search, Heart } from "lucide-react";
-import { motion, AnimatePresence, LazyMotion, domAnimation } from "framer-motion";
+import { ShoppingBag, X, Search, Heart } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useCartStore } from "@/features/cart/store/useCartStore";
 import { SearchBar } from "./SearchBar";
 
-export function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+// ============================================================================
+// CUSTOM HOOKS - Extracted for reusability and cleaner component
+// ============================================================================
 
-  const cartItems = useCartStore((state) => state.items);
-  const toggleCart = useCartStore((state) => state.toggleCart);
-  const wishlistItems = useWishlistStore((state) => state.items);
-  const toggleWishlistDrawer = useWishlistStore((state) => state.toggleWishlistDrawer);
+/** Tracks scroll position with threshold */
+function useScrollPosition(threshold: number = 50): boolean {
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      setScrolled(window.scrollY > threshold);
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    // Check initial scroll position
+    handleScroll();
 
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [threshold]);
+
+  return scrolled;
+}
+
+/** Detects clicks outside a referenced element */
+function useClickOutside<T extends HTMLElement>(
+  isActive: boolean,
+  onClickOutside: () => void
+): React.RefObject<T | null> {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClickOutside();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isActive, onClickOutside]);
+
+  return ref;
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Consolidated scroll tracking
+  const scrolled = useScrollPosition(50);
+
+  // Click outside handling for mobile menu
+  const navRef = useClickOutside<HTMLElement>(mobileOpen, () => setMobileOpen(false));
+
+  // Selective subscriptions - only derive the needed primitives to prevent re-renders
+  const totalItems = useCartStore((state) =>
+    state.items.reduce((acc, item) => acc + item.quantity, 0)
+  );
+  const toggleCart = useCartStore((state) => state.toggleCart);
+  const wishlistCount = useWishlistStore((state) => state.items.length);
+  const toggleWishlistDrawer = useWishlistStore((state) => state.toggleWishlistDrawer);
+
+  // Consolidated route change handler - closes overlays on navigation
   useEffect(() => {
     const handleRouteChange = () => {
       setMobileOpen(false);
@@ -38,55 +88,53 @@ export function Navbar() {
     return () => window.removeEventListener("popstate", handleRouteChange);
   }, []);
 
-  useEffect(() => {
-    if (!mobileOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("nav")) {
-        setMobileOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [mobileOpen]);
-
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
   return (
     <>
       <nav
+        ref={navRef}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-4",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-3 sm:py-4",
+          "safe-top",
           {
-            "glass-surface py-3": scrolled || searchOpen,
+            "glass-surface py-2 sm:py-3": scrolled || searchOpen,
             "bg-transparent": !scrolled && !searchOpen,
           }
         )}
       >
-        <div className="section-padding mx-auto flex items-center justify-between">
+        <div className="section-padding mx-auto flex items-center justify-between gap-2">
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden text-brand-ink p-2"
+            className="md:hidden text-brand-ink p-2 touch-target rounded-lg active:bg-brand-blush/30 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
           >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileOpen ? <X size={24} /> : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="8" x2="21" y2="8" />
+                <line x1="3" y1="16" x2="21" y2="16" />
+              </svg>
+            )}
           </button>
 
           {/* Logo */}
           <Link
             href="/"
             className={cn(
-              "flex-shrink-0 relative z-10 transition-all duration-300",
+              "flex-shrink-0 relative z-10 transition-all duration-300 touch-target flex items-center",
               searchOpen ? "opacity-0 md:opacity-100 md:mr-4" : "mx-auto md:mx-0"
             )}
           >
-            <h1 className="heading-display text-2xl md:text-3xl tracking-widest uppercase font-semibold text-brand-ink">
-              Diora
-            </h1>
+            <Image
+              src="/LOGO.png"
+              alt="DIORA"
+              width={160}
+              height={64}
+              priority
+              fetchPriority="high"
+              sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, 160px"
+              className="h-12 sm:h-16 md:h-20 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -95,67 +143,55 @@ export function Navbar() {
             searchOpen && "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto"
           )}>
             <Link
-              href="/#bestsellers"
-              className="text-sm font-sans font-medium hover:text-brand-rose transition-colors uppercase tracking-widest text-brand-ink/80"
+              href="/shop"
+              className="text-lg font-serif font-normal hover:text-brand-rose transition-colors tracking-[0.08em] text-brand-ink/80"
             >
-              Best Sellers
+              Shop
             </Link>
             <Link
-              href="/category/skin-care"
-              className="text-sm font-sans font-medium hover:text-brand-rose transition-colors uppercase tracking-widest text-brand-ink/80"
+              href="/about"
+              className="text-lg font-serif font-normal hover:text-brand-rose transition-colors tracking-[0.08em] text-brand-ink/80"
             >
-              Skin Care
+              Story
             </Link>
             <Link
-              href="/category/hair-care"
-              className="text-sm font-sans font-medium hover:text-brand-rose transition-colors uppercase tracking-widest text-brand-ink/80"
+              href="/contact"
+              className="text-lg font-serif font-normal hover:text-brand-rose transition-colors tracking-[0.08em] text-brand-ink/80"
             >
-              Hair Care
+              Contact
             </Link>
           </div>
 
-          {/* Right Actions: Search + Wishlist + Cart + User */}
-          <div className="flex items-center gap-2 relative z-10">
-            {/* Search Toggle (Desktop) */}
-            <AnimatePresence mode="wait">
-              {searchOpen ? (
-                <motion.div
-                  key="search-bar"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="hidden md:block"
-                >
-                  <SearchBar
-                    className="w-64 lg:w-80"
-                    onClose={() => setSearchOpen(false)}
-                  />
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="search-icon"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setSearchOpen(true)}
-                  className="hidden md:block p-2 text-brand-ink hover:text-brand-rose transition-colors"
-                  aria-label="Open search"
-                >
-                  <Search size={20} strokeWidth={1.5} />
-                </motion.button>
-              )}
-            </AnimatePresence>
+          {/* Right Actions: Search + Wishlist + Cart */}
+          <div className="flex items-center gap-1 sm:gap-2 relative z-10">
+            {/* Search Toggle (Desktop) — CSS transition instead of framer-motion */}
+            {searchOpen ? (
+              <div className="hidden md:block animate-fade-in">
+                <SearchBar
+                  className="w-64 lg:w-80"
+                  onClose={() => setSearchOpen(false)}
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="hidden md:block p-2 text-brand-ink hover:text-brand-rose transition-colors"
+                aria-label="Open search"
+              >
+                <Search size={20} strokeWidth={1.5} />
+              </button>
+            )}
 
             {/* Wishlist Icon */}
             <button
               onClick={toggleWishlistDrawer}
-              className="relative p-2 text-brand-ink hover:text-brand-rose transition-colors focus:outline-none"
+              className="relative p-2 touch-target text-brand-ink hover:text-brand-rose transition-colors focus:outline-none active:bg-brand-blush/30 rounded-lg"
               aria-label="Open wishlist"
             >
-              <Heart size={24} strokeWidth={1.5} />
-              {wishlistItems.length > 0 && (
-                <span className="absolute top-0 right-0 bg-brand-rose text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-sans font-bold translate-x-1 -translate-y-1">
-                  {wishlistItems.length}
+              <Heart size={20} strokeWidth={1.5} className="sm:w-6 sm:h-6" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 bg-brand-rose text-white text-[10px] w-4 h-4 min-w-4 min-h-4 flex items-center justify-center rounded-full font-sans font-bold">
+                  {wishlistCount}
                 </span>
               )}
             </button>
@@ -163,12 +199,12 @@ export function Navbar() {
             {/* Cart Icon */}
             <button
               onClick={toggleCart}
-              className="relative p-2 text-brand-ink hover:text-brand-rose transition-colors focus:outline-none"
+              className="relative p-2 touch-target text-brand-ink hover:text-brand-rose transition-colors focus:outline-none active:bg-brand-blush/30 rounded-lg"
               aria-label={`Open cart with ${totalItems} items`}
             >
-              <ShoppingBag size={24} strokeWidth={1.5} />
+              <ShoppingBag size={24} strokeWidth={1.5} className="sm:w-6 sm:h-6" />
               {totalItems > 0 && (
-                <span className="absolute top-0 right-0 bg-brand-rose text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-sans font-bold translate-x-1 -translate-y-1">
+                <span className="absolute -top-0.5 -right-0.5 bg-brand-rose text-white text-[10px] w-5 h-5 min-w-5 min-h-5 flex items-center justify-center rounded-full font-sans font-bold">
                   {totalItems}
                 </span>
               )}
@@ -176,49 +212,42 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
-        <LazyMotion features={domAnimation}>
-          <AnimatePresence>
-            {mobileOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="absolute top-full left-0 right-0 bg-brand-offWhite border-b border-brand-rose/10 shadow-lg md:hidden overflow-hidden"
-              >
-                <div className="flex flex-col p-6 space-y-4">
-                  {/* Mobile Search */}
-                  <SearchBar
-                    className="w-full mb-4"
-                    onClose={() => setMobileOpen(false)}
-                  />
+        {/* Mobile Menu Overlay — CSS animation instead of framer-motion */}
+        {mobileOpen && (
+          <div
+            className="absolute top-full left-0 right-0 bg-brand-offWhite border-b border-brand-rose/10 shadow-lg md:hidden overflow-hidden safe-bottom animate-slide-in-left"
+          >
+            <div className="flex flex-col p-4 sm:p-6 space-y-2 sm:space-y-4">
+              {/* Mobile Search */}
+              <SearchBar
+                className="w-full mb-4"
+                onClose={() => setMobileOpen(false)}
+              />
 
-                  <Link
-                    href="/#bestsellers"
-                    onClick={() => setMobileOpen(false)}
-                    className="text-lg font-sans uppercase tracking-widest hover:text-brand-rose transition-colors border-b border-brand-rose/10 pb-4"
-                  >
-                    Best Sellers
-                  </Link>
-                  <Link
-                    href="/category/skin-care"
-                    onClick={() => setMobileOpen(false)}
-                    className="text-lg font-sans uppercase tracking-widest hover:text-brand-rose transition-colors border-b border-brand-rose/10 pb-4"
-                  >
-                    Skin Care
-                  </Link>
-                  <Link
-                    href="/category/hair-care"
-                    onClick={() => setMobileOpen(false)}
-                    className="text-lg font-sans uppercase tracking-widest hover:text-brand-rose transition-colors pb-2"
-                  >
-                    Hair Care
-                  </Link>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </LazyMotion>
+              <Link
+                href="/shop"
+                onClick={() => setMobileOpen(false)}
+                className="text-xl font-serif tracking-[0.08em] hover:text-brand-rose transition-colors border-b border-brand-rose/10 pb-3 sm:pb-4 py-3 touch-target active:bg-brand-blush/20 rounded-lg"
+              >
+                Shop
+              </Link>
+              <Link
+                href="/about"
+                onClick={() => setMobileOpen(false)}
+                className="text-xl font-serif tracking-[0.08em] hover:text-brand-rose transition-colors border-b border-brand-rose/10 pb-3 sm:pb-4 py-3 touch-target active:bg-brand-blush/20 rounded-lg"
+              >
+                Story
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setMobileOpen(false)}
+                className="text-xl font-serif tracking-[0.08em] hover:text-brand-rose transition-colors pb-2 py-3 touch-target active:bg-brand-blush/20 rounded-lg"
+              >
+                Contact
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
     </>
   );

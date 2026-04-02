@@ -65,6 +65,7 @@ export const useWishlistStore = create<WishlistState>()(
     }),
     {
       name: "diora-wishlist-storage",
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );

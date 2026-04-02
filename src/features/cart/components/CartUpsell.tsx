@@ -8,6 +8,7 @@ import { getProducts } from "@/lib/api";
 import { useCartStore } from "@/features/cart/store/useCartStore";
 import { formatPrice } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui";
+import unsplashLoader from "@/shared/lib/unsplash-loader";
 
 interface CartUpsellProps {
   currentProductIds: string[];
@@ -53,6 +54,8 @@ export function CartUpsell({ currentProductIds }: CartUpsellProps) {
                   fill
                   className="object-cover"
                   sizes="64px"
+                  loader={unsplashLoader}
+                  unoptimized
                 />
               </div>
               <div className="flex-1 min-w-0">

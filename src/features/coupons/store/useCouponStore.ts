@@ -221,7 +221,8 @@ export const useCouponStore = create<CouponState>()(
         );
       },
       
-      validateCoupon: (code: string, cartTotal: number, itemCount: number) => {
+      validateCoupon: (code: string, cartTotal: number, // eslint-disable-next-line @typescript-eslint/no-unused-vars
+itemCount: number) => {
         const { availableCoupons, usedCoupons, appliedCoupon } = get();
         
         // Check if already applied

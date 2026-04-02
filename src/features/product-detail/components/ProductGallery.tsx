@@ -4,211 +4,146 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/shared/lib/utils";
-import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductGalleryProps {
   images: string[];
   name: string;
 }
 
+// Generate a tiny blur placeholder (solid color approximation)
+const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZkZTRlYyIvPjwvc3ZnPg==";
+
 export function ProductGallery({ images, name }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
-  const imageRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
+  // Use CSS custom properties for zoom position - bypasses React render cycle
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
-    const rect = imageRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    setMousePosition({ x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) });
+    if (!containerRef.current || !isZoomed) return;
+
+    // Cancel any pending RAF to prevent queue buildup
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    // Schedule update on next frame for smooth 60fps
+    rafRef.current = requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+      
+      // Update CSS custom properties directly - no React state!
+      containerRef.current.style.setProperty('--zoom-x', `${x * 100}%`);
+      containerRef.current.style.setProperty('--zoom-y', `${y * 100}%`);
+    });
+  }, [isZoomed]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsZoomed(false);
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    // Reset CSS variables
+    if (containerRef.current) {
+      containerRef.current.style.setProperty('--zoom-x', '50%');
+      containerRef.current.style.setProperty('--zoom-y', '50%');
+    }
   }, []);
 
-  const handlePrevImage = () => {
-    setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const handleNextImage = () => {
-    setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  const currentImage = images[selectedIndex] || images[0];
+  const hasMultipleImages = images.length > 1;
+  const isLCP = selectedIndex === 0;
 
   return (
     <>
-      <div className="flex flex-col-reverse md:flex-row gap-4">
-        {/* Thumbnails */}
-        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-x-visible">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedIndex(i)}
-              className={cn(
-                "relative w-16 h-20 md:w-20 md:h-24 rounded-luxury overflow-hidden flex-shrink-0 transition-all duration-300",
-                selectedIndex === i
-                  ? "ring-2 ring-brand-rose ring-offset-2 opacity-100"
-                  : "ring-1 ring-brand-rose/20 opacity-60 hover:opacity-100 hover:ring-brand-rose/50"
-              )}
-            >
-              <Image
-                src={img}
-                alt={`${name} view ${i + 1}`}
-                fill
-                className="object-cover"
-                sizes="80px"
-              />
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col-reverse md:flex-row gap-2 sm:gap-3 md:gap-4">
+        {/* Thumbnails - Horizontal scroll on mobile, vertical on desktop */}
+        {hasMultipleImages && (
+          <div className="flex md:flex-col gap-1.5 sm:gap-2 md:gap-3 overflow-x-auto md:overflow-x-visible scrollbar-hide pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedIndex(i)}
+                className={cn(
+                  "relative w-16 h-20 sm:w-[72px] sm:h-[88px] md:w-20 md:h-24 rounded-lg md:rounded-luxury overflow-hidden flex-shrink-0 transition-all duration-200",
+                  selectedIndex === i
+                    ? "ring-2 ring-brand-rose ring-offset-1 md:ring-offset-2 opacity-100"
+                    : "ring-1 ring-brand-rose/20 opacity-60 hover:opacity-80"
+                )}
+                aria-label={`View ${name} - image ${i + 1}`}
+                aria-pressed={selectedIndex === i}
+              >
+                <Image
+                  src={img}
+                  alt={`${name} view ${i + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Main Image with Zoom */}
         <div
-          ref={imageRef}
-          className="relative flex-1 aspect-[4/5] bg-brand-blush/20 rounded-luxury overflow-hidden cursor-zoom-in group"
+          ref={containerRef}
+          className={cn(
+            "relative flex-1 w-full pb-[133.33%] sm:pb-[125%] md:pb-0 md:h-[500px] lg:h-[600px] bg-brand-blush/20 rounded-lg md:rounded-luxury overflow-hidden",
+            "cursor-zoom-in",
+            isZoomed && "cursor-zoom-out"
+          )}
+          style={{
+            '--zoom-x': '50%',
+            '--zoom-y': '50%',
+          } as React.CSSProperties}
           onMouseEnter={() => setIsZoomed(true)}
-          onMouseLeave={() => setIsZoomed(false)}
+          onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
-          onClick={() => setIsLightboxOpen(true)}
         >
-          <AnimatePresence mode="wait">
+          {/* Simple opacity crossfade - no layout thrashing */}
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={selectedIndex}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
               className="absolute inset-0"
             >
               <Image
-                src={images[selectedIndex]}
+                src={currentImage}
                 alt={`${name} — view ${selectedIndex + 1}`}
                 fill
                 className={cn(
-                  "object-cover transition-transform duration-200",
+                  "object-cover transition-transform duration-150 ease-out",
                   isZoomed && "scale-[2.5]"
                 )}
-                style={isZoomed ? {
-                  transformOrigin: `${mousePosition.x * 100}% ${mousePosition.y * 100}%`,
-                } : {}}
+                style={{
+                  transformOrigin: 'var(--zoom-x) var(--zoom-y)',
+                }}
                 sizes="(max-width: 768px) 100vw, 50vw"
-                priority={selectedIndex === 0}
-                quality={90}
+                priority={isLCP}
+                fetchPriority={isLCP ? "high" : undefined}
+                {...(!isLCP && { placeholder: "blur", blurDataURL: BLUR_DATA_URL })}
               />
             </motion.div>
           </AnimatePresence>
 
-          {/* Zoom Hint */}
-          <div className="absolute bottom-4 right-4 bg-brand-ink/80 backdrop-blur-sm text-brand-offWhite px-3 py-2 rounded-full flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <ZoomIn size={16} />
-            <span className="text-xs font-sans">Click to expand</span>
-          </div>
-
-          {/* Image Counter */}
-          <div className="absolute bottom-4 left-4 bg-brand-ink/80 backdrop-blur-sm text-brand-offWhite px-3 py-1 rounded-full text-xs font-sans">
-            {selectedIndex + 1} / {images.length}
-          </div>
+          {/* Image counter */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-2 sm:left-3 md:left-4 bg-brand-ink/80 backdrop-blur-sm text-brand-offWhite px-2 py-1 rounded-full text-[10px] font-sans pointer-events-none">
+              {selectedIndex + 1} / {images.length}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Lightbox */}
-      <AnimatePresence>
-        {isLightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-brand-ink/95 backdrop-blur-sm flex items-center justify-center"
-            onClick={() => setIsLightboxOpen(false)}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setIsLightboxOpen(false)}
-              className="absolute top-6 right-6 p-3 bg-brand-offWhite/10 hover:bg-brand-offWhite/20 rounded-full text-brand-offWhite transition-colors z-10"
-            >
-              <X size={24} />
-            </button>
-
-            {/* Navigation */}
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePrevImage();
-                  }}
-                  className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-brand-offWhite/10 hover:bg-brand-offWhite/20 rounded-full text-brand-offWhite transition-colors"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNextImage();
-                  }}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-brand-offWhite/10 hover:bg-brand-offWhite/20 rounded-full text-brand-offWhite transition-colors"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
-
-            {/* Main Image */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-[90vw] h-[80vh] max-w-5xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={images[selectedIndex]}
-                alt={`${name} — view ${selectedIndex + 1}`}
-                fill
-                className="object-contain"
-                sizes="90vw"
-                quality={95}
-                priority
-              />
-            </motion.div>
-
-            {/* Thumbnails in Lightbox */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedIndex(i);
-                  }}
-                  className={cn(
-                    "relative w-16 h-16 rounded-lg overflow-hidden transition-all duration-300",
-                    selectedIndex === i
-                      ? "ring-2 ring-brand-rose ring-offset-2 ring-offset-brand-ink"
-                      : "opacity-50 hover:opacity-100"
-                  )}
-                >
-                  <Image
-                    src={img}
-                    alt={`${name} view ${i + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Image Name */}
-            <div className="absolute bottom-6 left-6 text-brand-offWhite">
-              <p className="font-serif text-lg">{name}</p>
-              <p className="text-sm text-brand-offWhite/60">
-                View {selectedIndex + 1} of {images.length}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

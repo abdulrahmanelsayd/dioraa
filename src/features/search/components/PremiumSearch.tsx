@@ -1,19 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Sparkles, Filter, ChevronRight, TrendingUp, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { searchProducts, getAllIngredients, getAllSkinTypes, getAllSkinConcerns } from "@/lib/api";
 import type { Product, ProductCategory } from "@/lib/api";
 import { formatPrice } from "@/shared/lib/utils";
 import { cn } from "@/shared/lib/utils";
+import unsplashLoader from "@/shared/lib/unsplash-loader";
 
 interface PremiumSearchProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+// Extended product type with hero flag for sorting
+interface ProductWithHero extends Product {
+  isHero?: boolean;
 }
 
 const RECENT_SEARCHES = ["Rose Serum", "Vitamin C", "Night Cream", "Hair Mask"];
@@ -37,7 +44,10 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [immediateQuery, setImmediateQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300); // 300ms debounce
   
   const [activeFilters, setActiveFilters] = useState<{
@@ -58,7 +68,8 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
   }, [isOpen]);
 
   // Search query with debounced value
-  const { data: searchResults, isLoading } = useQuery({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: searchResults, isLoading, refetch } = useQuery({
     queryKey: ["search", debouncedQuery, activeFilters],
     queryFn: () =>
       searchProducts(debouncedQuery, 1, 8).then((res) => ({
@@ -76,6 +87,7 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
   });
 
   // Filter options
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: ingredients } = useQuery({
     queryKey: ["ingredients"],
     queryFn: getAllIngredients,
@@ -125,6 +137,34 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      
+                      // Don't do anything if already loading
+                      if (isLoading) return;
+                      
+                      // If we already have results for this query, use them
+                      if (searchResults?.data && searchResults.data.length > 0) {
+                        const firstProduct = searchResults.data[0];
+                        router.push(`/product/${firstProduct.slug}`);
+                        onClose();
+                        return;
+                      }
+                      
+                      // Otherwise, trigger immediate search and navigate
+                      if (query.trim()) {
+                        searchProducts(query.trim(), 1, 8).then((res) => {
+                          if (res.data.length > 0) {
+                            router.push(`/product/${res.data[0].slug}`);
+                          } else {
+                            router.push("/shop");
+                          }
+                          onClose();
+                        });
+                      }
+                    }
+                  }}
                   placeholder="Search products, ingredients, concerns..."
                   className="flex-1 text-xl font-light text-brand-ink placeholder:text-brand-ink/30 focus:outline-none bg-transparent"
                 />
@@ -317,7 +357,7 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
                         {searchResults?.total} Results
                       </span>
                       <Link
-                        href={`/search?q=${encodeURIComponent(query)}`}
+                        href="/shop"
                         onClick={onClose}
                         className="text-xs text-brand-rose hover:text-brand-deepRose flex items-center gap-1"
                       >
@@ -326,9 +366,27 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
                       </Link>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      {searchResults?.data.map((product) => (
-                        <SearchResultItem key={product.id} product={product} onClose={onClose} />
-                      ))}
+                      {/* Prioritize Hero products first, then by relevance */}
+                      {searchResults?.data
+                        .slice()
+                        .sort((a: ProductWithHero, b: ProductWithHero) => {
+                          const aIsHero = a.badge?.toLowerCase().includes('hero') || a.isHero;
+                          const bIsHero = b.badge?.toLowerCase().includes('hero') || b.isHero;
+                          if (aIsHero && !bIsHero) return -1;
+                          if (!aIsHero && bIsHero) return 1;
+                          return 0;
+                        })
+                        .map((product: ProductWithHero) => {
+                          const isHero = product.badge?.toLowerCase().includes('hero') || product.isHero;
+                          return (
+                            <SearchResultItem 
+                              key={product.id} 
+                              product={product} 
+                              onClose={onClose} 
+                              isHero={isHero}
+                            />
+                          );
+                        })}
                     </div>
                   </div>
                 )}
@@ -348,19 +406,29 @@ export function PremiumSearch({ isOpen, onClose }: PremiumSearchProps) {
   );
 }
 
-function SearchResultItem({ product, onClose }: { product: Product; onClose: () => void }) {
+function SearchResultItem({ product, onClose, isHero }: { product: Product; onClose: () => void; isHero?: boolean }) {
   return (
     <Link
       href={`/product/${product.slug}`}
       onClick={onClose}
-      className="flex items-center gap-4 p-3 rounded-xl hover:bg-brand-blush/20 transition-colors group"
+      className={cn(
+        "flex items-center gap-4 p-3 rounded-xl hover:bg-brand-blush/20 transition-colors group relative",
+        isHero && "bg-brand-rose/5 border border-brand-rose/20"
+      )}
     >
+      {isHero && (
+        <div className="absolute -top-1 -left-1 bg-brand-rose text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+          Hero
+        </div>
+      )}
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-brand-blush/30 flex-shrink-0">
         <Image
           src={product.image}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-500"
+          loader={unsplashLoader}
+          unoptimized
         />
       </div>
       <div className="flex-1 min-w-0">

@@ -4,7 +4,6 @@ import { CartItem, Product } from "@/shared/types";
 
 interface CartState {
   items: CartItem[];
-  savedItems: CartItem[]; // Saved for later
   isOpen: boolean;
   lastAddedItem: CartItem | null; // For toast notification
   autoOpenCart: boolean; // User preference
@@ -15,18 +14,12 @@ interface CartState {
   toggleCart: () => void;
   setAutoOpenCart: (value: boolean) => void;
   clearLastAddedItem: () => void;
-  // Save for later actions
-  saveForLater: (productId: string) => void;
-  moveToCart: (productId: string) => void;
-  removeSavedItem: (productId: string) => void;
-  moveAllToCart: () => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      savedItems: [],
       isOpen: false,
       lastAddedItem: null,
       autoOpenCart: false, // Default to false - use toast instead
@@ -36,13 +29,15 @@ export const useCartStore = create<CartState>()(
           (item) => item.id === product.id && item.selectedVariantId === selectedVariantId
         );
 
-        const newItem: CartItem = { 
+        // Payload representing what was JUST added (for toast notification)
+        const lastAddedPayload: CartItem = { 
           ...product, 
-          quantity, 
+          quantity,  // The quantity being added in THIS action
           selectedVariantId 
         };
 
         if (existingItem) {
+          // Update existing item: add new quantity to existing
           const updatedItems = currentItems.map((item) =>
             item.id === product.id && item.selectedVariantId === selectedVariantId
               ? { ...item, quantity: item.quantity + quantity }
@@ -50,13 +45,14 @@ export const useCartStore = create<CartState>()(
           );
           set({
             items: updatedItems,
-            lastAddedItem: newItem,
-            isOpen: get().autoOpenCart, // Only open if user preference is set
+            lastAddedItem: lastAddedPayload,  // Show what was just added (e.g., "Added 3")
+            isOpen: get().autoOpenCart,
           });
         } else {
+          // Add new item with specified quantity
           set({ 
-            items: [...currentItems, newItem], 
-            lastAddedItem: newItem,
+            items: [...currentItems, lastAddedPayload], 
+            lastAddedItem: lastAddedPayload,
             isOpen: get().autoOpenCart,
           });
         }
@@ -71,72 +67,15 @@ export const useCartStore = create<CartState>()(
             item.id === productId ? { ...item, quantity } : item
           ),
         })),
-      clearCart: () => set({ items: [], savedItems: [], lastAddedItem: null }),
+      clearCart: () => set({ items: [], lastAddedItem: null }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       setAutoOpenCart: (value) => set({ autoOpenCart: value }),
       clearLastAddedItem: () => set({ lastAddedItem: null }),
-
-      // Save for Later - Luxury Feature
-      saveForLater: (productId: string) => {
-        const item = get().items.find((i) => i.id === productId);
-        if (item) {
-          set({
-            items: get().items.filter((i) => i.id !== productId),
-            savedItems: [...get().savedItems, item],
-          });
-        }
-      },
-
-      moveToCart: (productId: string) => {
-        const item = get().savedItems.find((i) => i.id === productId);
-        if (item) {
-          const existingItem = get().items.find((i) => i.id === productId);
-          if (existingItem) {
-            set({
-              savedItems: get().savedItems.filter((i) => i.id !== productId),
-              items: get().items.map((i) =>
-                i.id === productId ? { ...i, quantity: i.quantity + item.quantity } : i
-              ),
-            });
-          } else {
-            set({
-              savedItems: get().savedItems.filter((i) => i.id !== productId),
-              items: [...get().items, item],
-            });
-          }
-        }
-      },
-
-      removeSavedItem: (productId: string) => {
-        set({
-          savedItems: get().savedItems.filter((i) => i.id !== productId),
-        });
-      },
-
-      moveAllToCart: () => {
-        const { savedItems, items } = get();
-        const mergedItems = [...items];
-        
-        savedItems.forEach((savedItem) => {
-          const existingIndex = mergedItems.findIndex((i) => i.id === savedItem.id);
-          if (existingIndex >= 0) {
-            mergedItems[existingIndex].quantity += savedItem.quantity;
-          } else {
-            mergedItems.push(savedItem);
-          }
-        });
-        
-        set({
-          items: mergedItems,
-          savedItems: [],
-        });
-      },
     }),
     {
       name: "diora-cart-storage",
       partialize: (state) => ({
         items: state.items,
-        savedItems: state.savedItems,
         autoOpenCart: state.autoOpenCart,
       }),
     }

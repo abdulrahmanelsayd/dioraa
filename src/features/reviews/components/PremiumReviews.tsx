@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Star, ThumbsUp, CheckCircle2, Image as ImageIcon, ChevronDown, Filter } from "lucide-react";
-import Image from "next/image";
+import { motion } from "framer-motion";
+import { Star, ThumbsUp, CheckCircle2, Image as ImageIcon, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getProductReviews, getReviewSummary } from "@/lib/api";
 import { cn } from "@/shared/lib/utils";

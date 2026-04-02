@@ -1,125 +1,30 @@
 /**
  * API Types - Shared across all API services
  * These types represent the data contracts between frontend and backend
+ * 
+ * Note: Core entity types (Product, CartItem, etc.) are re-exported from @/shared/types
+ * to maintain a single source of truth.
  */
 
-export interface ProductVariant {
-  id: string;
-  size: string;
-  volume: string;
-  price: number;
-  originalPrice?: number;
-  stockCount: number;
-  inStock: boolean;
-  isDefault?: boolean;
-}
+import type {
+  Product,
+  ProductVariant,
+  CartItem,
+  Review,
+  SkinType,
+  SkinConcern,
+  ProductCategory,
+} from "@/shared/types";
 
-export interface Review {
-  id: string;
-  productId: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  rating: number;
-  title: string;
-  comment: string;
-  helpful: number;
-  verified: boolean;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  category: ProductCategory;
-  subcategory?: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviewCount: number;
-  reviews?: Review[];
-  image: string;
-  images?: string[];
-  badge?: string;
-  isNew?: boolean;
-  description?: string;
-  shortDescription?: string;
-  ingredients?: string[];
-  allergens?: string[];
-  inStock?: boolean;
-  stockCount?: number;
-  variants?: ProductVariant[];
-  skinTypes?: SkinType[];
-  concerns?: SkinConcern[];
-  benefits?: string[];
-  howToUse?: string;
-  volume?: string;
-  countryOfOrigin?: string;
-  crueltyFree?: boolean;
-  vegan?: boolean;
-  expiryMonths?: number;
-}
-
-export type ProductCategory =
-  | "Skin Care"
-  | "Hair Care"
-  | "Makeup"
-  | "Body Care"
-  | "Fragrance"
-  | "Tools & Accessories";
-
-export type SkinType =
-  | "Oily"
-  | "Dry"
-  | "Combination"
-  | "Sensitive"
-  | "Normal"
-  | "All Skin Types";
-
-export type SkinConcern =
-  | "Acne"
-  | "Anti-Aging"
-  | "Dark Spots"
-  | "Dryness"
-  | "Dullness"
-  | "Fine Lines"
-  | "Oiliness"
-  | "Pores"
-  | "Redness"
-  | "Sensitivity"
-  | "Uneven Texture"
-  | "Hydration"
-  | "Firmness"
-  | "Brightening";
-
-export type MakeupSubcategory =
-  | "Face"
-  | "Eyes"
-  | "Lips"
-  | "Cheeks"
-  | "Brushes & Tools";
-
-export type BodyCareSubcategory =
-  | "Body Wash"
-  | "Body Lotion"
-  | "Body Scrub"
-  | "Hand Care"
-  | "Foot Care"
-  | "Sun Care";
-
-export type FragranceSubcategory =
-  | "Perfume"
-  | "Eau de Parfum"
-  | "Eau de Toilette"
-  | "Body Mist"
-  | "Home Fragrance";
-
-export interface CartItem extends Product {
-  quantity: number;
-  selectedVariantId?: string;
-}
+export type {
+  Product,
+  ProductVariant,
+  CartItem,
+  Review,
+  SkinType,
+  SkinConcern,
+  ProductCategory,
+};
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -152,6 +57,11 @@ export interface ProductFilters {
   crueltyFree?: boolean;
   vegan?: boolean;
   minRating?: number;
+  limit?: number;
+  /** Page number for pagination (1-indexed) */
+  page?: number;
+  /** Number of items per page */
+  pageSize?: number;
 }
 
 export interface Category {

@@ -23,6 +23,7 @@ import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { profileUpdateSchema, addressSchema, type ProfileUpdateFormData, type AddressFormData } from "@/features/auth/schemas";
 import type { Address, Order } from "@/features/auth/types";
 import Link from "next/link";
+import Image from "next/image";
 
 type Tab = "profile" | "orders" | "addresses";
 
@@ -738,9 +739,11 @@ function OrderCard({ order }: { order: Order }) {
       <div className="space-y-3">
         {order.items.map((item, idx) => (
           <div key={idx} className="flex items-center gap-4">
-            <img
+            <Image
               src={item.image}
               alt={item.name}
+              width={64}
+              height={64}
               className="w-16 h-16 object-cover rounded-luxury"
             />
             <div className="flex-1">

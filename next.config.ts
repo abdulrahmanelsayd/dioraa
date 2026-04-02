@@ -1,14 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactCompiler: process.env.NODE_ENV === "production",
+  compress: true,
+  poweredByHeader: false,
   experimental: {
-    // Reduce memory usage in development
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+    ],
+    esmExternals: true,
   },
   images: {
-    qualities: [75, 85, 90],
-    unoptimized: process.env.NODE_ENV === "development",
+    // Enable Next.js image optimization for automatic WebP/AVIF conversion
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "cdn.diora.com" },
@@ -17,8 +20,11 @@ const nextConfig: NextConfig = {
     // Device sizes for responsive images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     // Image sizes for srcset
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640],
+    // Supported quality values
+    qualities: [75, 80, 85],
   },
+  turbopack: {},
 };
 
 export default nextConfig;

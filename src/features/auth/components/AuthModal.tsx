@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +28,10 @@ export function AuthModal({ isOpen, onClose, defaultView = "login" }: AuthModalP
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dior Pink Palette - Reserved for future theming enhancements
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const diorPink = {};
 
   const login = useAuthStore((state) => state.login);
   const signup = useAuthStore((state) => state.signup);

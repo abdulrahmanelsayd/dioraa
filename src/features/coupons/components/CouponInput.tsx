@@ -100,7 +100,7 @@ export function CouponInput({ cartTotal, cartItems, onOpenDrawer, compact = fals
                   "transition-all duration-200",
                   !couponInputValue.trim()
                     ? "bg-brand-mist/20 text-brand-mist"
-                    : "bg-brand-ink text-brand-offWhite hover:bg-brand-ink/90"
+                    : "bg-brand-rose text-white hover:bg-brand-rose/90"
                 )}
               >
                 {isApplying ? <Loader2 size={14} className="animate-spin" /> : "Apply"}
@@ -202,7 +202,7 @@ export function CouponInput({ cartTotal, cartItems, onOpenDrawer, compact = fals
                   "transition-all duration-200",
                   !couponInputValue.trim()
                     ? "bg-brand-mist/20 text-brand-mist cursor-not-allowed"
-                    : "bg-brand-ink text-brand-offWhite hover:bg-brand-ink/90"
+                    : "bg-brand-rose text-white hover:bg-brand-rose/90"
                 )}
               >
                 {isApplying ? (

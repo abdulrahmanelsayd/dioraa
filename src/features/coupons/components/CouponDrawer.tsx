@@ -137,7 +137,7 @@ export function CouponDrawer({ cartTotal, cartItems, onApplySuccess }: CouponDra
                         {appliedCoupon.coupon.code} Applied
                       </p>
                       <p className="text-xs text-green-600">
-                        You're saving ${appliedCoupon.discountAmount.toFixed(2)}
+                        You&apos;re saving ${appliedCoupon.discountAmount.toFixed(2)}
                       </p>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ import { MOCK_PRODUCTS } from "@/lib/api";
 import type { Product } from "@/lib/api";
 import { formatPrice } from "@/shared/lib/utils";
 import { cn } from "@/shared/lib/utils";
+import unsplashLoader from "@/shared/lib/unsplash-loader";
 
 interface ProductRecommendationsProps {
   currentProduct: Product;
@@ -22,6 +23,7 @@ export function ProductRecommendations({
   cartProductIds = [],
   variant = "complete-ritual",
 }: ProductRecommendationsProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const cartItems = useCartStore((state) => state.items);
   const addToCart = useCartStore((state) => state.addItem);
 
@@ -199,6 +201,8 @@ function RecommendationCard({
             alt={product.name}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
+            loader={unsplashLoader}
+            unoptimized
           />
           
           {/* Badges */}
@@ -344,6 +348,8 @@ export function CartRecommendations({ cartProductIds }: { cartProductIds: string
                 alt={product.name}
                 fill
                 className="object-cover"
+                loader={unsplashLoader}
+                unoptimized
               />
             </div>
             <div className="flex-1 min-w-0">

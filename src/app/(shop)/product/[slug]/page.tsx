@@ -1,102 +1,147 @@
-"use client";
-
-import { use } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/lib/api";
-import { ProductGallery } from "@/features/product-detail/components/ProductGallery";
-import { ProductInfo } from "@/features/product-detail/components/ProductInfo";
-import { ProductTabs } from "@/features/product-detail/components/ProductTabs";
-import { RelatedProducts } from "@/features/product-detail/components/RelatedProducts";
-import { pageTransition, staggerContainer, fadeInUp } from "@/shared/theme/animations";
-import { Footer } from "@/features/footer";
-import { PageHero } from "@/features/hero/components/PageHero";
-import { Breadcrumbs } from "@/shared/components/Breadcrumbs";
-import ProductLoading from "./loading";
+import Script from "next/script";
+import { getProductBySlug, MOCK_PRODUCTS } from "@/lib/api";
+import { ProductDetailClient } from "./ProductDetailClient";
+import { Product } from "@/shared/types";
 
-export default function ProductPage({
+// Generate static paths for all products at build time
+export async function generateStaticParams() {
+  return MOCK_PRODUCTS.map((product) => ({
+    slug: product.slug,
+  }));
+}
+
+// Generate dynamic metadata for SEO and OpenGraph
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
+
+  if (!product) {
+    return {
+      title: "Product Not Found | Diora",
+      description: "The requested product could not be found.",
+    };
+  }
+
+  const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
+  const price = defaultVariant?.price ?? product.price;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const originalPrice = defaultVariant?.originalPrice ?? product.originalPrice;
+
+  const title = `${product.name} | ${product.category} | Diora`;
+  const description = product.shortDescription || product.description || `Shop ${product.name} at Diora. Premium luxury beauty and skincare products.`;
+
+  return {
+    title,
+    description,
+    keywords: [product.name, product.category, "luxury beauty", "skincare", "Diora"],
+    openGraph: {
+      title: `${product.name} - ${formatPrice(price)}`,
+      description,
+      images: [
+        {
+          url: product.image,
+          width: 640,
+          height: 853,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [product.image],
+    },
+    alternates: {
+      canonical: `/product/${slug}`,
+    },
+  };
+}
+
+// Server Component - fetches data server-side
+export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = use(params);
+  const { slug } = await params;
+  
+  // Fetch product server-side
+  const product = await getProductBySlug(slug);
 
-  const { data: product, isLoading } = useQuery({
-    queryKey: ["product", slug],
-    queryFn: () => getProductBySlug(slug),
-  });
-
-  if (!isLoading && !product) {
+  if (!product) {
     notFound();
   }
 
+  const jsonLd = generateProductJsonLd(product, slug);
+
   return (
-    <motion.div
-      variants={pageTransition}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="flex flex-col w-full bg-brand-offWhite min-h-screen"
-    >
-      {isLoading ? (
-        <ProductLoading />
-      ) : product ? (
-        <>
-          <PageHero
-            label="Product Detail"
-            title={product.name}
-          />
-          <section className="section-padding py-8 md:py-16 bg-brand-offWhite">
-            <div className="max-w-7xl mx-auto">
-              {/* Breadcrumbs */}
-              <div className="mb-6">
-                <Breadcrumbs
-                  items={[
-                    { label: product.category, href: `/category/${product.category.toLowerCase().replace(" ", "-")}` },
-                    { label: product.name },
-                  ]}
-                />
-              </div>
-
-              <motion.div
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
-                className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16"
-              >
-                <motion.div variants={fadeInUp}>
-                  <ProductGallery
-                    images={product.images || [product.image]}
-                    name={product.name}
-                  />
-                </motion.div>
-                <motion.div variants={fadeInUp}>
-                  <ProductInfo product={product} />
-                </motion.div>
-              </motion.div>
-            </div>
-          </section>
-
-          {/* Tabs Section */}
-          <section className="section-padding bg-brand-offWhite pb-24 md:pb-32">
-            <div className="max-w-7xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <ProductTabs product={product} />
-              </motion.div>
-            </div>
-          </section>
-
-          {/* Related Products */}
-          <RelatedProducts productId={product.id} category={product.category} />
-
-          <Footer />
-        </>
-      ) : null}
-    </motion.div>
+    <>
+      <Script
+        id="product-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetailClient product={product} />
+    </>
   );
+}
+
+// Helper function for price formatting
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+// JSON-LD Structured Data Type Definitions
+interface ProductOffer {
+  "@type": "Offer";
+  price: string;
+  priceCurrency: string;
+  availability: string;
+  url: string;
+}
+
+interface ProductJsonLd {
+  "@context": "https://schema.org";
+  "@type": "Product";
+  name: string;
+  description: string;
+  image: string | string[];
+  sku: string;
+  offers: ProductOffer;
+}
+
+// Generate Product JSON-LD structured data
+function generateProductJsonLd(product: Product, slug: string): ProductJsonLd {
+  const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
+  const price = defaultVariant?.price ?? product.price;
+  const isInStock = defaultVariant?.inStock ?? product.inStock ?? true;
+  const stockCount = defaultVariant?.stockCount ?? product.stockCount ?? 0;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || product.shortDescription || `Shop ${product.name} at Diora. Premium luxury beauty and skincare products.`,
+    image: product.images?.[0] || product.image,
+    sku: product.id,
+    offers: {
+      "@type": "Offer",
+      price: price.toString(),
+      priceCurrency: "USD",
+      availability: isInStock && stockCount > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      url: `https://diora.com/product/${slug}`,
+    },
+  };
 }

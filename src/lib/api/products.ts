@@ -5,7 +5,7 @@
  */
 
 import type { Product, ProductFilters, Category, PaginatedResponse } from "./types";
-import { withErrorHandling, simulateDelay } from "./client";
+import { simulateDelay } from "./client";
 import { MOCK_PRODUCTS } from "./products-catalog";
 
 // ============================================================================
@@ -74,13 +74,18 @@ const MOCK_CATEGORIES: Category[] = [
 // ============================================================================
 
 /**
- * Fetch all products with optional filtering
+ * Fetch all products with optional filtering and AbortSignal support
  */
 export async function getProducts(
-  filters?: ProductFilters
+  filters?: ProductFilters,
+  signal?: AbortSignal
 ): Promise<Product[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(500);
+
+    // Check if request was aborted
+    if (signal?.aborted) {
+      throw new Error("Request aborted");
+    }
 
     let products = [...MOCK_PRODUCTS];
 
@@ -204,39 +209,37 @@ export async function getProducts(
             break;
         }
       }
+
+      // Apply limit after all filtering and sorting
+      if (filters.limit && filters.limit > 0) {
+        products = products.slice(0, filters.limit);
+      }
+
+      // Apply pagination offset
+      if (filters.page && filters.pageSize) {
+        const start = (filters.page - 1) * filters.pageSize;
+        const end = start + filters.pageSize;
+        products = products.slice(start, end);
+      }
     }
 
     return products;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Fetch a single product by slug
  */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  return withErrorHandling(async () => {
     await simulateDelay(400);
     return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Fetch a single product by ID
  */
 export async function getProductById(id: string): Promise<Product | null> {
-  return withErrorHandling(async () => {
     await simulateDelay(300);
     return MOCK_PRODUCTS.find((p) => p.id === id) || null;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
@@ -246,7 +249,6 @@ export async function getRelatedProducts(
   productId: string,
   limit: number = 4
 ): Promise<Product[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(400);
 
     const currentProduct = MOCK_PRODUCTS.find((p) => p.id === productId);
@@ -256,23 +258,14 @@ export async function getRelatedProducts(
       (p) => p.id !== productId && p.category === currentProduct.category
     )
       .slice(0, limit);
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Fetch all categories
  */
 export async function getCategories(): Promise<Category[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(200);
     return MOCK_CATEGORIES;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
@@ -281,13 +274,8 @@ export async function getCategories(): Promise<Category[]> {
 export async function getCategoryBySlug(
   slug: string
 ): Promise<Category | null> {
-  return withErrorHandling(async () => {
     await simulateDelay(200);
     return MOCK_CATEGORIES.find((c) => c.slug === slug) || null;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
@@ -298,7 +286,6 @@ export async function searchProducts(
   page: number = 1,
   pageSize: number = 12
 ): Promise<PaginatedResponse<Product>> {
-  return withErrorHandling(async () => {
     await simulateDelay(400);
 
     const queryLower = query.toLowerCase();
@@ -322,10 +309,6 @@ export async function searchProducts(
       pageSize,
       hasMore: startIndex + pageSize < allResults.length,
     };
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
@@ -334,17 +317,12 @@ export async function searchProducts(
 export async function checkProductStock(
   productId: string
 ): Promise<{ inStock: boolean; stockCount: number }> {
-  return withErrorHandling(async () => {
     await simulateDelay(100);
     const product = MOCK_PRODUCTS.find((p) => p.id === productId);
     return {
       inStock: product?.inStock ?? false,
       stockCount: product?.stockCount ?? 0,
     };
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 // ============================================================================
@@ -360,7 +338,6 @@ export async function getProductReviews(
   productId: string,
   filters?: ReviewFilters
 ): Promise<Review[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(300);
     
     const product = MOCK_PRODUCTS.find((p) => p.id === productId);
@@ -396,17 +373,12 @@ export async function getProductReviews(
     }
     
     return reviews;
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Get review summary for a product
  */
 export async function getReviewSummary(productId: string): Promise<ReviewSummary> {
-  return withErrorHandling(async () => {
     await simulateDelay(200);
     
     const product = MOCK_PRODUCTS.find((p) => p.id === productId);
@@ -435,17 +407,12 @@ export async function getReviewSummary(productId: string): Promise<ReviewSummary
       verifiedCount,
       distribution,
     };
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Search ingredients across all products
  */
 export async function searchIngredients(query: string): Promise<string[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(300);
     
     const queryLower = query.toLowerCase();
@@ -460,17 +427,12 @@ export async function searchIngredients(query: string): Promise<string[]> {
     });
     
     return Array.from(allIngredients).sort();
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Get all unique ingredients (for allergy search)
  */
 export async function getAllIngredients(): Promise<string[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(200);
     
     const allIngredients = new Set<string>();
@@ -480,10 +442,6 @@ export async function getAllIngredients(): Promise<string[]> {
     });
     
     return Array.from(allIngredients).sort();
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
@@ -493,7 +451,6 @@ export async function getProductsByIngredient(
   ingredient: string,
   exclude: boolean = false
 ): Promise<Product[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(400);
     
     const ingLower = ingredient.toLowerCase();
@@ -507,30 +464,20 @@ export async function getProductsByIngredient(
     return MOCK_PRODUCTS.filter(
       (p) => p.ingredients?.some((i) => i.toLowerCase().includes(ingLower))
     );
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Get all skin types
  */
 export async function getAllSkinTypes(): Promise<string[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(100);
     return ["Oily", "Dry", "Combination", "Sensitive", "Normal", "All Skin Types"];
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 
 /**
  * Get all skin concerns
  */
 export async function getAllSkinConcerns(): Promise<string[]> {
-  return withErrorHandling(async () => {
     await simulateDelay(100);
     return [
       "Acne",
@@ -548,9 +495,5 @@ export async function getAllSkinConcerns(): Promise<string[]> {
       "Firmness",
       "Brightening",
     ];
-  }).then((result) => {
-    if (result.error) throw result.error;
-    return result.data!;
-  });
 }
 

@@ -157,7 +157,21 @@ export const checkoutContactSchema = z.object({
   marketingConsent: z.boolean().optional().default(false),
 });
 
-export const checkoutShippingSchema = addressSchema.omit({ label: true, isDefault: true });
+export const checkoutShippingSchema = addressSchema
+  .omit({ label: true, isDefault: true, country: true, postalCode: true, phone: true })
+  .extend({
+    email: z
+      .string()
+      .min(1, "Email is required")
+      .email("Please enter a valid email address"),
+    phone: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(
+        /^[\+]?[0-9\s\-\(\)\.]{7,20}$/,
+        "Please enter a valid phone number with country code if applicable"
+      ),
+  });
 
 export const checkoutPaymentSchema = z.object({
   cardNumber: z

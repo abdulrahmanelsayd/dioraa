@@ -7,24 +7,27 @@ import { Navbar } from "@/shared/components/Navbar";
 
 import { CartDrawer } from "@/features/cart/components/DynamicCartDrawer";
 import { WishlistDrawer } from "@/features/wishlist/components/DynamicWishlistDrawer";
-import { MobileBottomNav } from "@/shared/components/MobileBottomNav";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F8F5F2" },
+    { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
     { media: "(prefers-color-scheme: dark)", color: "#1A1A1A" },
   ],
 };
@@ -100,6 +103,11 @@ export const metadata: Metadata = {
   verification: {
     google: "google-site-verification-code",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DIORA",
+  },
 };
 
 export default function RootLayout({
@@ -110,16 +118,33 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col pt-20">
+      <head>
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* Defer manifest loading - not critical for initial render */}
+        <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" media="(max-width: 0)" />
+        <script dangerouslySetInnerHTML={{__html: `
+          (function() {
+            const link = document.querySelector('link[href="/manifest.json"]');
+            if (link) link.media = 'all';
+          })();
+        `}} />
+      </head>
+      <body className="min-h-full flex flex-col pt-16 sm:pt-20 pb-safe overflow-x-hidden">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-6 focus:py-3 focus:bg-brand-ink focus:text-white focus:rounded-lg focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-rose"
+        >
+          Skip to content
+        </a>
         <QueryProvider>
           <ToastProvider>
             <Navbar />
             <CartDrawer />
             <WishlistDrawer />
-            <MobileBottomNav />
             <main className="flex-grow" id="main-content">
               {children}
             </main>

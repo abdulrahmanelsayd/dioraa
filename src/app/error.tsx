@@ -9,7 +9,7 @@ interface ErrorProps {
   reset: () => void;
 }
 
-export default function GlobalError({ error, reset }: ErrorProps) {
+export default function SegmentError({ error, reset }: ErrorProps) {
   useEffect(() => {
     // Error is available for error reporting service integration (e.g., Sentry)
     // Error digest available: error.digest
