@@ -338,46 +338,46 @@ function ShareSheet({
             onClick={onClose}
             className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
           />
-          <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
+          <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-2 sm:p-4">
             <motion.div
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={springTransition}
               className={cn(
-                "w-full max-w-md rounded-3xl overflow-hidden border border-brand-blush/50",
+                "w-full max-w-md rounded-[2rem] sm:rounded-3xl overflow-hidden border border-brand-blush/50 mb-2 sm:mb-0",
                 "bg-gradient-to-b from-white/90 via-brand-blush/20 to-white/80 backdrop-blur-3xl",
                 "shadow-[0_20px_60px_rgba(212,165,165,0.25)]"
               )}
             >
               {/* Handle */}
-              <div className="pt-4 pb-3 flex justify-center">
+              <div className="pt-4 pb-2 sm:pb-3 flex justify-center">
                 <div className="w-12 h-1.5 bg-brand-rose/40 rounded-full" />
               </div>
 
               {/* Header */}
-              <div className="px-6 py-4 border-b border-brand-blush/30">
+              <div className="px-5 sm:px-6 py-3 sm:py-4 border-b border-brand-blush/30">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-xl text-brand-ink">Share Collection</h3>
+                  <h3 className="font-serif text-lg sm:text-xl text-brand-ink">Share Collection</h3>
                   <button
                     onClick={onClose}
-                    className="w-9 h-9 rounded-full bg-brand-blush/50 hover:bg-brand-rose/30 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-brand-blush/50 hover:bg-brand-rose/30 flex items-center justify-center transition-colors"
                   >
                     <X className="w-4 h-4 text-brand-ink/70" />
                   </button>
                 </div>
-                <p className="text-sm text-brand-mist mt-1 font-sans">
+                <p className="text-xs sm:text-sm text-brand-mist mt-1 font-sans">
                   {items.length} items · {formatPrice(totalValue)}
                 </p>
               </div>
 
               {/* Preview */}
-              <div className="px-6 py-5">
-                <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="px-5 sm:px-6 py-4 sm:py-5">
+                <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
                   {items.slice(0, 6).map((item) => (
                     <div
                       key={item.id}
-                      className="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-brand-blush/30 ring-2 ring-white/60"
+                      className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl overflow-hidden flex-shrink-0 bg-brand-blush/30 ring-2 ring-white/60"
                     >
                       <Image src={item.image} alt={item.name} fill className="object-cover" loader={unsplashLoader} unoptimized />
                     </div>
@@ -386,16 +386,16 @@ function ShareSheet({
               </div>
 
               {/* Copy Link */}
-              <div className="px-6 pb-7">
-                <div className="flex gap-2">
-                  <div className="flex-1 flex items-center gap-2 px-4 py-3.5 bg-brand-blush/30 rounded-2xl border border-white/60">
-                    <span className="text-sm text-brand-mist truncate">{shareUrl.slice(0, 30)}...</span>
+              <div className="px-5 sm:px-6 pb-6 sm:pb-7">
+                <div className="flex gap-2 w-full">
+                  <div className="flex-1 flex items-center px-3 sm:px-4 py-3 sm:py-3.5 bg-brand-blush/30 rounded-xl sm:rounded-2xl border border-white/60 min-w-0">
+                    <span className="text-xs sm:text-sm text-brand-mist truncate block w-full">{shareUrl}</span>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={handleCopy}
                     className={cn(
-                      "px-5 py-3.5 rounded-2xl font-medium transition-colors",
+                      "px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-sm font-medium transition-colors flex-shrink-0",
                       copied 
                         ? "bg-green-500 text-white" 
                         : "bg-brand-ink text-white hover:bg-brand-deepRose"
