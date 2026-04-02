@@ -133,8 +133,8 @@ export function Navbar() {
               height={64}
               priority
               fetchPriority="high"
-              sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, 160px"
-              className="h-12 sm:h-16 md:h-20 w-auto object-contain"
+              sizes="(max-width: 640px) 128px, (max-width: 768px) 128px, 160px"
+              className="h-16 sm:h-16 md:h-20 w-auto object-contain"
             />
           </Link>
 
