@@ -51,6 +51,12 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setIsHydrated(true);
+    // Force scroll to top when navigating from drawers
+    window.scrollTo({ top: 0, behavior: "instant" });
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }, 50);
+    return () => clearTimeout(timer);
   }, []);
 
   const items = useCartStore((state) => state.items);
