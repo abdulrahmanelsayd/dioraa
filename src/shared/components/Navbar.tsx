@@ -121,8 +121,9 @@ export function Navbar() {
           <Link
             href="/"
             className={cn(
-              "flex-shrink-0 relative z-10 transition-all duration-300 touch-target flex items-center",
-              searchOpen ? "opacity-0 md:opacity-100 md:mr-4" : "mx-auto md:mx-0"
+              "flex-shrink-0 z-10 transition-all duration-300 touch-target flex items-center",
+              "absolute left-1/2 -translate-x-1/2 md:static md:transform-none md:left-auto",
+              searchOpen ? "opacity-0 md:opacity-100 md:mr-4" : ""
             )}
           >
             <Image

@@ -74,13 +74,13 @@ export function ProductCard({ product, index = 0, priority = false, className, o
 
         {/* Action Buttons - Quick Add, Wishlist, Quick View */}
         <div className="absolute bottom-3 right-3 flex items-center gap-2">
-          {/* Wishlist Heart - Only show on hover */}
+          {/* Wishlist Heart - Always show on mobile, hover on desktop */}
           <button
             onClick={handleWishlistToggle}
             className={cn(
               "w-8 h-8 flex items-center justify-center",
               "bg-white rounded-full",
-              "opacity-0 group-hover:opacity-100",
+              "opacity-100 md:opacity-0 md:group-hover:opacity-100",
               "transition-opacity duration-200",
               "hover:bg-gray-100",
               isWishlisted && "bg-brand-rose text-white hover:bg-brand-deepRose"
@@ -103,7 +103,7 @@ export function ProductCard({ product, index = 0, priority = false, className, o
               className={cn(
                 "w-8 h-8 flex items-center justify-center",
                 "bg-gray-200 rounded-full",
-                "opacity-0 group-hover:opacity-100",
+                "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                 "transition-opacity duration-200",
                 "cursor-not-allowed"
               )}
@@ -117,7 +117,7 @@ export function ProductCard({ product, index = 0, priority = false, className, o
               className={cn(
                 "w-8 h-8 flex items-center justify-center",
                 "bg-white rounded-full",
-                "opacity-0 group-hover:opacity-100",
+                "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                 "transition-opacity duration-200",
                 "hover:bg-gray-100"
               )}

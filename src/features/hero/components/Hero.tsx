@@ -97,15 +97,17 @@ export function Hero() {
       >
         <motion.h1
           variants={fadeInUp}
-          className="flex flex-row flex-nowrap items-center justify-center gap-x-2 md:gap-x-4 lg:gap-x-6 drop-shadow-2xl"
+          className="flex flex-col sm:flex-row items-center justify-center gap-y-1 sm:gap-y-0 sm:gap-x-4 lg:gap-x-6 drop-shadow-2xl text-center"
         >
-          <span className="font-serif text-4xl md:text-6xl lg:text-[6.5rem] tracking-tight text-white font-normal capitalize">
-            Pure
-          </span>
-          <span className="font-serif text-2xl md:text-4xl lg:text-[4.5rem] text-white/90 italic -translate-y-0.5 md:-translate-y-1">
-            &
-          </span>
-          <span className="font-sans text-4xl md:text-6xl lg:text-[6.5rem] font-bold tracking-tighter text-white uppercase">
+          <div className="flex items-center justify-center gap-x-2 sm:gap-x-4">
+            <span className="font-serif text-5xl sm:text-6xl lg:text-[6.5rem] tracking-tight text-white font-normal capitalize">
+              Pure
+            </span>
+            <span className="font-serif text-3xl sm:text-4xl lg:text-[4.5rem] text-white/90 italic -translate-y-1 sm:-translate-y-1">
+              &
+            </span>
+          </div>
+          <span className="font-sans text-5xl sm:text-6xl lg:text-[6.5rem] font-bold tracking-tighter text-white uppercase leading-none mt-2 sm:mt-0">
             Radiant
           </span>
         </motion.h1>
